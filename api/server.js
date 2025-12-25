@@ -1,14 +1,12 @@
 const express = require("express");
 const cors = require("cors");
-require("dotenv").config();
-
 const { MongoClient, ServerApiVersion } = require("mongodb");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-const uri = process.env.MONGODB_URI;
+const uri = process.env.MONGO_URI; // environment variable from Vercel
 
 const client = new MongoClient(uri, {
   serverApi: {
@@ -18,45 +16,33 @@ const client = new MongoClient(uri, {
   },
 });
 
-let contactCollection;
+let cachedClient = null;
+let contactCollection = null;
 
-async function startServer() {
-  try {
-    // ✅ Connect to MongoDB
-    await client.connect();
-    console.log("✅ MongoDB connected successfully");
-
-    // Use database & collection
-    const db = client.db("mydatabase");
-    contactCollection = db.collection("contacts");
-
-    // ✅ API to receive form data
-    app.post("/contact", async (req, res) => {
-      try {
-        const { name, email, phone, message } = req.body;
-
-        await contactCollection.insertOne({
-          name,
-          email,
-          phone,
-          message,
-          createdAt: new Date(),
-        });
-
-        res.json({ message: "Message saved successfully!" });
-      } catch (err) {
-        res.status(500).json({ message: "Database error" });
-      }
-    });
-
-    // ✅ Start server
-    app.listen(5000, () => {
-      console.log("🚀 Backend running on http://localhost:5000");
-    });
-
-  } catch (error) {
-    console.log("❌ Connection error:", error);
-  }
+async function connectDB() {
+  if (cachedClient) return;
+  await client.connect();
+  cachedClient = client;
+  const db = client.db("mydatabase");
+  contactCollection = db.collection("contacts");
 }
 
-startServer();
+app.post("/api/contact", async (req, res) => {
+  try {
+    await connectDB();
+    const { name, email, phone, message } = req.body;
+    await contactCollection.insertOne({
+      name,
+      email,
+      phone,
+      message,
+      createdAt: new Date(),
+    });
+    res.json({ message: "Message saved successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Database error" });
+  }
+});
+
+module.exports = app; // Vercel requires exporting the app
