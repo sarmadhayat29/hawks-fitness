@@ -505,7 +505,7 @@ contactForm.addEventListener("submit", (e) => {
   const message = document.getElementById("message").value;
 
   if (name && email && phone && message) {
-    fetch("https://hawks-fitness-4skddjgqs-glitchauras-projects.vercel.app/api/contact", {
+    fetch("http://localhost:5000/contact", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
