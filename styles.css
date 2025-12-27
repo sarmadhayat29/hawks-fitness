@@ -1037,6 +1037,12 @@ html {
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.02);
 }
+.error-message {
+  color: red;
+  font-size: 0.9em;
+  margin-top: 2px;
+  display: block;
+}
 
 /* Footer */
 .footer {

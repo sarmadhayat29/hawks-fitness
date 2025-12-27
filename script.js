@@ -496,40 +496,74 @@ setInterval(() => {
 // Contact Form
 const contactForm = document.getElementById("contactForm");
 
+const nameInput = document.getElementById("name");
+const emailInput = document.getElementById("email");
+const phoneInput = document.getElementById("phone");
+const messageInput = document.getElementById("message");
+
+const nameError = document.getElementById("nameError");
+const emailError = document.getElementById("emailError");
+const phoneError = document.getElementById("phoneError");
+const messageError = document.getElementById("messageError");
+
+// Live validation events
+nameInput.addEventListener("input", () => {
+  nameError.textContent = nameInput.value.trim() ? "" : "Name is required";
+});
+
+emailInput.addEventListener("input", () => {
+  emailError.textContent = validator.isEmail(emailInput.value.trim())
+    ? ""
+    : "Invalid email address";
+});
+
+phoneInput.addEventListener("input", () => {
+  phoneError.textContent = validator.isMobilePhone(phoneInput.value.trim(), "en-PK")
+    ? ""
+    : "Invalid phone number";
+});
+
+messageInput.addEventListener("input", () => {
+  messageError.textContent = messageInput.value.trim() ? "" : "Message cannot be empty";
+});
+
+// Updated submit handler
 contactForm.addEventListener("submit", (e) => {
   e.preventDefault();
 
-  const name = document.getElementById("name").value;
-  const email = document.getElementById("email").value;
-  const phone = document.getElementById("phone").value;
-  const message = document.getElementById("message").value;
+  // Trigger live validation
+  nameInput.dispatchEvent(new Event("input"));
+  emailInput.dispatchEvent(new Event("input"));
+  phoneInput.dispatchEvent(new Event("input"));
+  messageInput.dispatchEvent(new Event("input"));
 
-  if (name && email && phone && message) {
-    fetch("http://localhost:5000/contact", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        name,
-        email,
-        phone,
-        message,
-      }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        alert(data.message || `Thank you, ${name}! Your message has been sent.`);
-        contactForm.reset();
-      })
-      .catch((error) => {
-        console.log(error);
-        alert("Failed to send message. Try again later.");
-      });
-  } else {
-    alert("Please fill all fields");
+  // If any errors, stop submission
+  if (nameError.textContent || emailError.textContent || phoneError.textContent || messageError.textContent) {
+    return alert("Please fix errors before submitting");
   }
+
+  // Send data
+  fetch("http://localhost:5000/contact", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name: nameInput.value.trim(),
+      email: emailInput.value.trim(),
+      phone: phoneInput.value.trim(),
+      message: messageInput.value.trim(),
+    }),
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      alert(data.message || `Thank you, ${nameInput.value}! Your message has been sent.`);
+      contactForm.reset();
+    })
+    .catch((error) => {
+      console.log(error);
+      alert("Failed to send message. Try again later.");
+    });
 });
+
 
 // Smooth scroll for anchor links
 document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
